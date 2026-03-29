@@ -25,17 +25,48 @@ write_common_outputs() {
   set_output "tag-created" "${7-}"
 }
 
+read_action_input() {
+  local input_id="$1"
+  local default_value="${2-}"
+  local input_key="${input_id^^}"
+  local underscore_name="INPUT_${input_key//-/_}"
+  local hyphen_name="INPUT_${input_key}"
+  local value=""
+
+  value="$(printenv "$underscore_name" 2>/dev/null || true)"
+
+  if [[ -z "$value" ]]; then
+    value="$(printenv "$hyphen_name" 2>/dev/null || true)"
+  fi
+
+  if [[ -z "$value" ]]; then
+    value="$default_value"
+  fi
+
+  printf '%s' "$value"
+}
+
 main() {
-  local token="${INPUT_TOKEN:-}"
-  local allowed_base_branches="${INPUT_ALLOWED_BASE_BRANCHES:-main,master}"
-  local tag_prefix="${INPUT_TAG_PREFIX:-v}"
-  local major_label="${INPUT_MAJOR_LABEL:-version:major}"
-  local minor_label="${INPUT_MINOR_LABEL:-version:minor}"
-  local patch_label="${INPUT_PATCH_LABEL:-version:patch}"
-  local prerelease_label_prefix="${INPUT_PRERELEASE_LABEL_PREFIX:-pre-release:}"
-  local build_label_prefix="${INPUT_BUILD_LABEL_PREFIX:-build:}"
-  local default_bump="${INPUT_DEFAULT_BUMP:-}"
-  local dry_run="${INPUT_DRY_RUN:-false}"
+  local token
+  token="$(read_action_input "token")"
+  local allowed_base_branches
+  allowed_base_branches="$(read_action_input "allowed-base-branches" "main,master")"
+  local tag_prefix
+  tag_prefix="$(read_action_input "tag-prefix" "v")"
+  local major_label
+  major_label="$(read_action_input "major-label" "version:major")"
+  local minor_label
+  minor_label="$(read_action_input "minor-label" "version:minor")"
+  local patch_label
+  patch_label="$(read_action_input "patch-label" "version:patch")"
+  local prerelease_label_prefix
+  prerelease_label_prefix="$(read_action_input "prerelease-label-prefix" "pre-release:")"
+  local build_label_prefix
+  build_label_prefix="$(read_action_input "build-label-prefix" "build:")"
+  local default_bump
+  default_bump="$(read_action_input "default-bump")"
+  local dry_run
+  dry_run="$(read_action_input "dry-run" "false")"
   local merged=""
   local pr_number=""
   local base_branch=""
